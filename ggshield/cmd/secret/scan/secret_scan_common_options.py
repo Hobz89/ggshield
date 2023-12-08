@@ -10,17 +10,14 @@ from ggshield.cmd.utils.common_options import (
     exit_zero_option,
     get_config_from_context,
     json_option,
-    text_json_sarif_format_option,
 )
 from ggshield.cmd.utils.context_obj import ContextObj
-from ggshield.cmd.utils.output_format import OutputFormat
 from ggshield.core.config.user_config import SecretConfig
 from ggshield.core.filter import init_exclusion_regexes
 from ggshield.utils.click import RealPath
 from ggshield.verticals.secret.output import (
     SecretJSONOutputHandler,
     SecretOutputHandler,
-    SecretSARIFOutputHandler,
     SecretTextOutputHandler,
 )
 
@@ -74,8 +71,7 @@ def _exclude_callback(
         ignored_paths.update(value)
 
     ignored_paths.update(IGNORED_DEFAULT_WILDCARDS)
-    ctx_obj = ContextObj.get(ctx)
-    ctx_obj.exclusion_regexes = init_exclusion_regexes(ignored_paths)
+    ctx.obj["exclusion_regexes"] = init_exclusion_regexes(ignored_paths)
     return value
 
 
@@ -125,7 +121,6 @@ def add_secret_scan_common_options() -> Callable[[AnyFunction], AnyFunction]:
     def decorator(cmd: AnyFunction) -> AnyFunction:
         add_common_options()(cmd)
         json_option(cmd)
-        text_json_sarif_format_option(cmd)
         _output_option(cmd)
         _show_secrets_option(cmd)
         exit_zero_option(cmd)
@@ -137,22 +132,17 @@ def add_secret_scan_common_options() -> Callable[[AnyFunction], AnyFunction]:
     return decorator
 
 
-OUTPUT_HANDLER_CLASSES = {
-    OutputFormat.TEXT: SecretTextOutputHandler,
-    OutputFormat.JSON: SecretJSONOutputHandler,
-    OutputFormat.SARIF: SecretSARIFOutputHandler,
-}
-
-
 def create_output_handler(ctx: click.Context) -> SecretOutputHandler:
     """Read objects defined in ctx.obj and create the appropriate OutputHandler
     instance"""
     ctx_obj = ContextObj.get(ctx)
-    output_handler_cls = OUTPUT_HANDLER_CLASSES[ctx_obj.output_format]
+    output_handler_cls = (
+        SecretJSONOutputHandler if ctx_obj.use_json else SecretTextOutputHandler
+    )
     config = ctx_obj.config
     return output_handler_cls(
         show_secrets=config.user_config.secret.show_secrets,
         verbose=config.user_config.verbose,
-        output=ctx_obj.output,
+        output=ctx.obj.output,
         ignore_known_secrets=config.user_config.secret.ignore_known_secrets,
     )

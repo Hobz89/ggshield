@@ -10,15 +10,12 @@ To use it:
 The `kwargs` argument is required because due to the way click works,
 `add_common_options()` adds an argument for each option it defines.
 """
-
 from pathlib import Path
-from typing import Any, Callable, List, Optional, TypeVar
+from typing import Any, Callable, Optional, TypeVar, cast
 
 import click
 
-from ggshield.cmd.utils.context_obj import ContextObj
 from ggshield.cmd.utils.debug_logs import setup_debug_logs
-from ggshield.cmd.utils.output_format import OutputFormat
 from ggshield.core.config.user_config import UserConfig
 
 
@@ -36,10 +33,10 @@ ClickCallback = Callable[
 
 def get_config_from_context(ctx: click.Context) -> UserConfig:
     """Returns the UserConfig object stored in Click context"""
-    return ContextObj.get(ctx).config.user_config
+    return cast(UserConfig, ctx.obj["config"].user_config)
 
 
-def create_ctx_callback(name: str) -> ClickCallback[ArgT]:
+def create_ctx_callback(name: str) -> ClickCallback:
     """Helper function to define a Click option callback for simple cases where we only
     have to set a value on Click context object if the option is defined.
     """
@@ -54,7 +51,7 @@ def create_ctx_callback(name: str) -> ClickCallback[ArgT]:
     return callback
 
 
-def create_config_callback(*option_names: str) -> ClickCallback[ArgT]:
+def create_config_callback(*option_names: str) -> ClickCallback:
     """Helper function to define a Click option callback for simple cases where we only
     have to set a configuration attribute if the option is defined.
 
@@ -158,21 +155,12 @@ exit_zero_option = click.option(
 )
 
 
-minimum_severity_option_iac = click.option(
+minimum_severity_option = click.option(
     "--minimum-severity",
     "minimum_severity",
     type=click.Choice(("LOW", "MEDIUM", "HIGH", "CRITICAL")),
     help="Minimum severity of the policies.",
 )
-
-
-minimum_severity_option_sca = click.option(
-    "--minimum-severity",
-    "minimum_severity",
-    type=click.Choice(("LOW", "MEDIUM", "HIGH", "CRITICAL", "MALICIOUS")),
-    help="Minimum severity of the vulnerabilities.",
-)
-
 
 ignore_path_option = click.option(
     "--ignore-path",
@@ -197,52 +185,13 @@ def add_common_options() -> Callable[[AnyFunction], AnyFunction]:
     return decorator
 
 
-def _set_json_output_format(
-    ctx: click.Context, param: click.Parameter, value: Optional[bool]
-) -> Optional[bool]:
-    if value:
-        ctx_obj = ContextObj.get(ctx)
-        ctx_obj.output_format = OutputFormat.JSON
-    return value
-
-
 json_option = click.option(
     "--json",
     "json_output",
     is_flag=True,
     default=None,
-    help="Shorthand for `--format json`.",
-    callback=_set_json_output_format,
-)
-
-
-def _set_output_format(
-    ctx: click.Context, param: click.Parameter, value: Optional[str]
-) -> Optional[str]:
-    if value:
-        ctx_obj = ContextObj.get(ctx)
-        ctx_obj.output_format = OutputFormat(value)
-    return value
-
-
-def _create_format_option(
-    formats: List[OutputFormat],
-) -> Callable[[click.decorators.FC], click.decorators.FC]:
-    return click.option(
-        "--format",
-        type=click.Choice([x.value for x in formats]),
-        help="Format to use for the output.",
-        callback=_set_output_format,
-    )
-
-
-# If a command only supports text and json formats, it should use this option
-text_json_format_option = _create_format_option([OutputFormat.TEXT, OutputFormat.JSON])
-
-
-# If a command supports text, sarif and json formats, it should use this option
-text_json_sarif_format_option = _create_format_option(
-    [OutputFormat.TEXT, OutputFormat.JSON, OutputFormat.SARIF]
+    help="Use JSON output.",
+    callback=create_ctx_callback("use_json"),
 )
 
 

@@ -5,11 +5,7 @@ import click
 from pygitguardian import GGClient
 from pygitguardian.models import Detail, Quota, QuotaResponse
 
-from ggshield.cmd.utils.common_options import (
-    add_common_options,
-    json_option,
-    text_json_format_option,
-)
+from ggshield.cmd.utils.common_options import add_common_options, json_option
 from ggshield.cmd.utils.context_obj import ContextObj
 from ggshield.cmd.utils.quota import format_quota_color
 from ggshield.core.client import create_client_from_config
@@ -17,7 +13,6 @@ from ggshield.core.errors import UnexpectedError
 
 
 @click.command()
-@text_json_format_option
 @json_option
 @add_common_options()
 @click.pass_context
@@ -26,7 +21,7 @@ def quota_cmd(ctx: click.Context, **kwargs: Any) -> int:
     Show the remaining quota of API calls available for the entire workspace.
     """
     ctx_obj = ContextObj.get(ctx)
-    client: GGClient = create_client_from_config(ctx_obj.config, ctx_obj.ui)
+    client: GGClient = create_client_from_config(ctx_obj.config)
     response: Union[Detail, QuotaResponse] = client.quota_overview()
 
     if not isinstance(response, (Detail, QuotaResponse)):
