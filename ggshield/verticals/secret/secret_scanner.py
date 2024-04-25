@@ -197,6 +197,10 @@ class SecretScanner:
                 handle_scan_chunk_error(scan, chunk)
                 continue
 
+            if not isinstance(scan, MultiScanResult):
+                display_error(f"\n{type(scan)=}")
+                display_error(f"{scan.status_code=}")
+                display_error(f"{scan.detail=}")
             assert isinstance(scan, MultiScanResult)
             for file, scanned in zip(chunk, scan.scan_results):
                 remove_ignored_from_result(scanned, self.ignored_matches)
