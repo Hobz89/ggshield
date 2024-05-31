@@ -7,9 +7,13 @@ from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn
 from typing_extensions import Self
 
 from ggshield.core.ui.scanner_ui import ScannerUI
+from ggshield.utils.logger import Logger
 
 from ..ggshield_ui import GGShieldProgress, GGShieldUI
 from .rich_scanner_ui import RichMessageOnlyScannerUI, RichProgressScannerUI
+
+
+logger = Logger(__name__)
 
 
 class RichGGShieldProgress(GGShieldProgress):
@@ -62,12 +66,12 @@ class RichGGShieldUI(GGShieldUI):
 
     def display_info(self, message: str) -> None:
         message = rich.markup.escape(message)
-        self.console.print(message)
+        logger.verbose(message, stacklevel=2)
 
     def display_warning(self, message: str) -> None:
         message = rich.markup.escape(message)
-        self.console.print(f"[yellow]Warning:[/] {message}")
+        logger.warning(message, stacklevel=2)
 
     def display_error(self, message: str) -> None:
         message = rich.markup.escape(message)
-        self.console.print(f"[red]Error:[/] {message}")
+        logger.error(message, stacklevel=2)

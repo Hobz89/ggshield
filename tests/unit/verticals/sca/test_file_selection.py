@@ -1,4 +1,5 @@
 import inspect
+import logging
 from pathlib import Path
 from typing import Set
 
@@ -64,7 +65,7 @@ def test_get_all_files_from_sca_paths(tmp_path):
     ("file_path", "expected"),
     [("front/file1.png", True), (".git/file2.png", False), ("file3.png", True)],
 )
-def test_get_ignored_files(tmp_path, capsysbinary, file_path, expected):
+def test_get_ignored_files(tmp_path, caplog, file_path, expected):
     """
     GIVEN a directory
     WHEN calling sca scan a directory
@@ -72,6 +73,7 @@ def test_get_ignored_files(tmp_path, capsysbinary, file_path, expected):
     """
     write_text(filename=str(tmp_path / file_path), content="")
 
+    caplog.set_level(logging.INFO)
     get_files_from_paths(
         paths=[Path(tmp_path)],
         exclusion_regexes=SCA_EXCLUSION_REGEXES,  # directories we don't want to traverse
@@ -80,11 +82,12 @@ def test_get_ignored_files(tmp_path, capsysbinary, file_path, expected):
         display_scanned_files=False,
     )
 
-    captured = capsysbinary.readouterr()
-
-    # stderr shows us the ignored binary files
-    # (stderr should be empty if binary files are in directories we don't want to traverse)
-    assert (captured.err != bytes("", "utf-8")) is expected
+    # `expected` means we expect a log message telling us the file was ignored
+    if expected:
+        assert len(caplog.messages) == 1
+        assert "Ignoring binary file" in caplog.messages[0]
+    else:
+        assert not caplog.messages
 
 
 @pytest.mark.parametrize(

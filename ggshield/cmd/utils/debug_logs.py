@@ -4,34 +4,31 @@ from typing import Optional
 
 import pygitguardian
 
-
-LOG_FORMAT = "%(asctime)s %(levelname)s %(process)x:%(thread)x %(name)s:%(funcName)s:%(lineno)d %(message)s"
-
-logger = logging.getLogger(__name__)
+from ggshield.utils.logger import Logger
 
 
-def disable_logs() -> None:
-    """By default, disable all logs, because when an error occurs we log an error
-    message and also print a human-friendly message using display_errors(). If we don't
-    disable all logs, then error logs are printed, resulting in the error being shown
-    twice.
-    """
-    logging.disable()
+LOG_FORMAT = "%(levelname)s: %(message)s"
+DEBUG_LOG_FORMAT = "%(asctime)s %(levelname)s %(process)x:%(thread)x %(name)s:%(funcName)s:%(lineno)d %(message)s"
+
+logger = Logger(__name__)
 
 
-def setup_debug_logs(*, filename: Optional[str]) -> None:
-    """Configure Python logger to log to stderr if filename is None, or to filename if
-    it's set.
-    """
-    # Re-enable logging, reverting the call to disable_logs()
-    logging.disable(logging.NOTSET)
+_logged_debug_info = False
+_last_set_log_level = logging.WARNING
 
-    logging.basicConfig(
-        filename=filename, level=logging.DEBUG, format=LOG_FORMAT, force=True
-    )
 
-    # Silence charset_normalizer, its debug output does not bring much
-    logging.getLogger("charset_normalizer").setLevel(logging.WARNING)
+def setup_logs(*, level: int = logging.INFO, filename: Optional[str] = None) -> None:
+    global _logged_debug_info, _last_set_log_level
 
-    logger.debug("args=%s", sys.argv)
-    logger.debug("py-gitguardian=%s", pygitguardian.__version__)
+    # Prevent reducing log level: using `--debug --verbose` should produce debug logs
+    if level > _last_set_log_level:
+        return
+    _last_set_log_level = level
+
+    log_format = LOG_FORMAT if level > logging.DEBUG else DEBUG_LOG_FORMAT
+    logging.basicConfig(filename=filename, level=level, format=log_format, force=True)
+
+    if level == logging.DEBUG and not _logged_debug_info:
+        logger.debug("args=%s", sys.argv)
+        logger.debug("py-gitguardian=%s", pygitguardian.__version__)
+        _logged_debug_info = True

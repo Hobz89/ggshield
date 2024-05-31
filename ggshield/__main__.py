@@ -21,7 +21,7 @@ from ggshield.cmd.secret.scan import scan_group
 from ggshield.cmd.status import status_cmd
 from ggshield.cmd.utils.common_options import add_common_options
 from ggshield.cmd.utils.context_obj import ContextObj
-from ggshield.cmd.utils.debug_logs import disable_logs, setup_debug_logs
+from ggshield.cmd.utils.debug_logs import setup_logs
 from ggshield.core import check_updates
 from ggshield.core.cache import Cache
 from ggshield.core.config import Config
@@ -31,7 +31,7 @@ from ggshield.core.text_utils import display_warning
 from ggshield.core.ui.plain_text.plain_text_ggshield_ui import PlainTextGGShieldUI
 from ggshield.core.ui.rich.rich_ggshield_ui import RichGGShieldUI
 from ggshield.utils.click import RealPath
-from ggshield.utils.logger import Logger
+from ggshield.utils.logger import VERBOSE, Logger
 from ggshield.utils.os import getenv_bool
 
 
@@ -111,9 +111,11 @@ def cli(
 
     _set_color(ctx)
 
+    # Setup logs
     if config.user_config.debug:
-        # if `debug` is set in the configuration file, then setup logs now.
-        setup_debug_logs(filename=None)
+        setup_logs(level=logging.DEBUG)
+    elif config.user_config.verbose:
+        setup_logs(level=VERBOSE)
 
 
 def _set_color(ctx: click.Context):
@@ -185,7 +187,7 @@ def main(args: Optional[List[str]] = None) -> Any:
     # See https://pyinstaller.org/en/latest/common-issues-and-pitfalls.html#multi-processing
     multiprocessing.freeze_support()
 
-    disable_logs()
+    setup_logs()
     show_crash_log = getenv_bool("GITGUARDIAN_CRASH_LOG")
     return cli.main(args, prog_name="ggshield", standalone_mode=not show_crash_log)
 

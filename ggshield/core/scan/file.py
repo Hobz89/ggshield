@@ -10,8 +10,12 @@ from ggshield.utils.files import (
     is_path_binary,
     url_for_path,
 )
+from ggshield.utils.logger import Logger
 
 from .scannable import Scannable
+
+
+logger = Logger(__name__)
 
 
 class File(Scannable):
@@ -88,7 +92,7 @@ def get_files_from_paths(
 
     if display_scanned_files:
         for f in files:
-            click.echo(f"- {click.format_filename(f.filename)}", err=True)
+            logger.verbose("Going to scan %s", f.filename)
 
     size = len(files)
     if size > 1 and not yes:
@@ -112,10 +116,7 @@ def generate_files_from_paths(
 
         if is_path_binary(path):
             if display_binary_files:
-                click.echo(
-                    f"ignoring binary file: {path}",
-                    err=True,
-                )
+                logger.info("Ignoring binary file: %s", path)
             continue
 
         yield File(path)
