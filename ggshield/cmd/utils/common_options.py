@@ -18,9 +18,10 @@ from typing import Any, Callable, List, Optional, TypeVar
 import click
 
 from ggshield.cmd.utils.context_obj import ContextObj
-from ggshield.cmd.utils.debug_logs import VERBOSE, setup_debug_logs
+from ggshield.cmd.utils.debug_logs import setup_debug_logs
 from ggshield.cmd.utils.output_format import OutputFormat
 from ggshield.core.config.user_config import UserConfig
+from ggshield.utils.logger import VERBOSE
 
 
 AnyFunction = Callable[..., Any]

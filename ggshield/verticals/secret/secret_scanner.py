@@ -1,5 +1,4 @@
 import concurrent.futures
-import logging
 import os
 import sys
 from ast import literal_eval
@@ -22,6 +21,7 @@ from ggshield.core.scan import DecodeError, ScanContext, Scannable
 from ggshield.core.text_utils import STYLE, display_error, format_text, pluralize
 from ggshield.core.types import IgnoredMatch
 from ggshield.core.ui.scanner_ui import ScannerUI
+from ggshield.utils.logger import Logger
 
 from .secret_scan_collection import Error, Result, Results
 
@@ -31,7 +31,7 @@ _API_PATH_MAX_LENGTH = 256
 _SIZE_METADATA_OVERHEAD = 10240  # 10 KB
 
 
-logger = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 if sys.version_info >= (3, 10):
@@ -138,8 +138,8 @@ class SecretScanner:
                 self.client.secret_scan_preferences.maximum_documents_per_scan,
             )
         )
-        logging.debug("max_doc_size=%d", maximum_document_size)
-        logging.debug("max_docs=%d", maximum_documents_per_scan)
+        logger.debug("max_doc_size=%d", maximum_document_size)
+        logger.debug("max_docs=%d", maximum_documents_per_scan)
         for scannable in scannables:
             try:
                 if scannable.is_longer_than(maximum_document_size):

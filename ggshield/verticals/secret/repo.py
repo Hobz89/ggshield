@@ -1,5 +1,4 @@
 import itertools
-import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Callable, Iterable, Iterator, List, Optional, Pattern, Set
@@ -16,9 +15,9 @@ from ggshield.core.scan import Commit, ScanContext
 from ggshield.core.types import IgnoredMatch
 from ggshield.core.ui.ggshield_ui import GGShieldUI
 from ggshield.utils.git_shell import get_list_commit_SHA, is_git_dir
+from ggshield.utils.logger import Logger
 from ggshield.utils.os import cd
 
-from ...cmd.utils.debug_logs import VERBOSE
 from .output import SecretOutputHandler
 from .secret_scan_collection import Results, SecretScanCollection
 from .secret_scanner import SecretScanner
@@ -28,7 +27,7 @@ from .secret_scanner import SecretScanner
 SCAN_THREADS = 4
 
 
-logger = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 def scan_repo_path(
@@ -193,9 +192,9 @@ def scan_commit_range(
 
         def commit_scanned_callback(commit: Commit):
             if include_staged and commit.sha is None:
-                logger.log(VERBOSE, "Scanned staged changes")
+                logger.verbose("Scanned staged changes")
             else:
-                logger.log(VERBOSE, f"Scanned {commit.sha}")
+                logger.verbose(f"Scanned {commit.sha}")
 
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             futures = []
